@@ -1,0 +1,24 @@
+
+version: '3'
+
+services:
+  db:
+    container_name: payment_gateway
+    image: bitnami/postgresql:latest
+    environment:
+      POSTGRES_USER: pgsql
+      POSTGRES_PASSWORD: pgsql
+      POSTGRES_DB: gateway
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pgsql", "-d", "gateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+

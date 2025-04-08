@@ -1,11 +1,16 @@
 package domain
 
-import "time"
+import (
+	"math/rand"
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Status string
 
-const(
-	StatusPending Status = "pending"
+const (
+	StatusPending  Status = "pending"
 	StatusApproved Status = "approved"
 	StatusRejected Status = "rejected"
 )
@@ -13,6 +18,7 @@ const(
 type Invoice struct {
 	ID             string
 	AccountID      string
+	Amount         float64
 	Status         Status
 	Description    string
 	PaymentType    string
@@ -22,5 +28,70 @@ type Invoice struct {
 }
 
 type CreditCard struct {
-	Number string
+	Number         string
+	CVV            string
+	ExpiryMonth    int
+	ExpiryYear     int
+	CardholderName string
+}
+
+func NewInvoice(accountID string, amount float64, description string, paymentType string, card CreditCard) (*Invoice, error) {
+	if amount <= 0 {
+		return nil, ErrInvalidAmount
+	}
+
+	lastDigits := card.Number[len(card.Number)-4:]
+
+	return &Invoice{
+		ID:             uuid.New().String(),
+		AccountID:      accountID,
+		Amount:         amount,
+		Status:         StatusPending,
+		Description:    description,
+		PaymentType:    paymentType,
+		CardLastDigits: lastDigits,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}, nil
+}
+
+func (i *Invoice) Process() error {
+	if i.Amount >= 10000 {
+		return nil
+	}
+
+	randomSource := rand.New(rand.NewSource(time.Now().Unix()))
+
+	var newStatus Status
+	if randomSource.Float64() <= 0.7 {
+		newStatus = StatusApproved
+	} else {
+		newStatus = StatusRejected
+	}
+
+	i.Status = newStatus
+
+	return nil
+}
+
+func (i *Invoice) Approve() error {
+	if i.Status != StatusPending {
+		return ErrInvalidStatus
+	}
+
+	i.Status = StatusApproved
+	i.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (i *Invoice) Reject() error {
+	if i.Status != StatusPending {
+		return ErrInvalidStatus
+	}
+
+	i.Status = StatusRejected
+	i.UpdatedAt = time.Now()
+
+	return nil
 }

@@ -72,14 +72,12 @@ Endpoints related to invoices (`/invoices`) require authentication via an API ke
           "email": "user@example.com"
         }
         ```
-    *   *Returns the created account details, including its generated API key.*
+    *   **Response:** `201 Created` with account details including `id`, `name`, `email`, `balance`, `api_key`, `created_at`, `updated_at`.
 
 *   **Get Account Details**
     *   `GET /accounts`
-    *   **Headers:**
-        *   `X-API-KEY`: The API key of the account to retrieve.
-    *   *Returns the details of the account associated with the provided API key.*
-    *(Note: While the middleware isn't explicitly applied here in `server.go`, the handler likely uses the key to fetch the specific account. The original README implied this requirement.)*
+    *   **Headers:** `X-API-KEY: <your_account_api_key>`
+    *   **Response:** `200 OK` with account details including `id`, `name`, `email`, `balance`, `api_key`, `created_at`, `updated_at`.
 
 
 ### Invoices
@@ -89,25 +87,30 @@ Endpoints related to invoices (`/invoices`) require authentication via an API ke
 *   **Create Invoice**
     *   `POST /invoices`
     *   **Headers:** `X-API-KEY: <your_account_api_key>`
-    *   **Body:**
+    *   **Body:** (Based on `dto.CreateInvoiceInput`)
         ```json
         {
           "amount": 100.50,
-          "description": "Service Provided"
-          // Add other relevant invoice fields based on internal/domain/invoice.go
+          "description": "Service Provided",
+          "payment_type": "credit_card", // Example value
+          "card_number": "************1234", // Example value
+          "card_cvv": "123", // Example value
+          "expiry_month": 12,
+          "expiry_year": 2028,
+          "cardholder_name": "John Doe"
         }
         ```
-    *   *Returns the created invoice details.*
+    *   **Response:** `201 Created` with invoice details including `id`, `account_id`, `amount`, `status`, `description`, `payment_type`, `card_last_digits`, `created_at`, `updated_at`.
 
 *   **List Invoices by Account**
     *   `GET /invoices`
     *   **Headers:** `X-API-KEY: <your_account_api_key>`
-    *   *Returns a list of invoices associated with the account.*
+    *   **Response:** `200 OK` with an array of invoice objects (matching the structure above).
 
 *   **Get Invoice by ID**
     *   `GET /invoices/{id}`
     *   **Headers:** `X-API-KEY: <your_account_api_key>`
-    *   *Returns the details of the specified invoice, if it belongs to the account.*
+    *   **Response:** `200 OK` with the details of the specified invoice (matching the structure above), if found and associated with the account. Returns `404 Not Found` or `403 Forbidden` otherwise.
 
 ## Project Structure
 

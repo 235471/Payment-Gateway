@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
+	"github.com/devfullcycle/imersao22/go-gateway/internal/domain"
 	"github.com/devfullcycle/imersao22/go-gateway/internal/dto"
 	"github.com/devfullcycle/imersao22/go-gateway/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -34,7 +36,14 @@ func (h *InvoiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.invoiceService.CreateInvoice(input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrAccountNotFound):
+			http.Error(w, "Internal server error during processing", http.StatusInternalServerError)
+		case errors.Is(err, domain.ErrInvalidAmount), errors.Is(err, domain.ErrInvalidStatus):
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -58,7 +67,14 @@ func (h *InvoiceHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.invoiceService.GetInvoiceByID(id, apiKey)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrInvoiceNotFound), errors.Is(err, domain.ErrAccountNotFound):
+			http.Error(w, "Invoice not found or invalid API key", http.StatusNotFound)
+		case errors.Is(err, domain.ErrUnauthorizedAccess):
+			http.Error(w, "Forbidden: Invoice does not belong to this account", http.StatusForbidden)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -76,7 +92,14 @@ func (h *InvoiceHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.invoiceService.GetInvoiceByID(id, apiKey)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrInvoiceNotFound), errors.Is(err, domain.ErrAccountNotFound):
+			http.Error(w, "Invoice not found or invalid API key", http.StatusNotFound)
+		case errors.Is(err, domain.ErrUnauthorizedAccess):
+			http.Error(w, "Forbidden: Invoice does not belong to this account", http.StatusForbidden)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -102,7 +125,12 @@ func (h *InvoiceHandler) ListByAccount(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.invoiceService.ListByAccountAPIKey(apiKey)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrAccountNotFound):
+			http.Error(w, "Account not found for API key", http.StatusNotFound)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 

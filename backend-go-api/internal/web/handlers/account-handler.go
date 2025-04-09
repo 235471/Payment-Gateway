@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/devfullcycle/imersao22/go-gateway/internal/domain"
 	"github.com/devfullcycle/imersao22/go-gateway/internal/dto"
 	"github.com/devfullcycle/imersao22/go-gateway/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -27,7 +29,12 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.accountService.CreateAccount(&input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrDuplicateAPIKey):
+			http.Error(w, err.Error(), http.StatusConflict)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -45,7 +52,12 @@ func (h *AccountHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.accountService.GetAccountByKey(apiKey)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrAccountNotFound):
+			http.Error(w, err.Error(), http.StatusNotFound)
+		default:
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 

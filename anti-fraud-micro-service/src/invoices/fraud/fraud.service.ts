@@ -14,10 +14,10 @@ export class FraudService {
   ) {}
 
   async processInvoice(processInvoiceFraud: ProcessInvoiceFraudDto) {
-    const { invoiceId, accountId, amount } = processInvoiceFraud;
+    const { invoice_id, account_id, amount } = processInvoiceFraud;
 
     const checkInvoice = await this.prisma.invoice.findUnique({
-      where: { id: invoiceId },
+      where: { id: invoice_id },
     });
 
     if (checkInvoice) {
@@ -25,10 +25,10 @@ export class FraudService {
     }
 
     const account = await this.prisma.account.upsert({
-      where: { id: accountId },
+      where: { id: account_id },
       update: {},
       create: {
-        id: accountId,
+        id: account_id,
       },
     });
 
@@ -37,7 +37,7 @@ export class FraudService {
 
     const recentRejectedInvoices = await this.prisma.invoice.findMany({
       where: {
-        accountId: accountId,
+        accountId: account_id,
         status: InvoiceStatus.REJECTED,
         createdAt: { gte: thirtyDaysAgo },
       },
@@ -70,14 +70,14 @@ export class FraudService {
     const fraudResult = await this.fraudAggregateSpecification.detectFraud({
       account,
       amount,
-      invoiceId,
+      invoiceId: invoice_id,
       currentSuspicionScore,
     });
 
     const invoice = await this.prisma.invoice.create({
       data: {
-        id: invoiceId,
-        accountId,
+        id: invoice_id,
+        accountId: account_id,
         amount,
         ...(fraudResult.hasFraud && {
           // Use mapped result

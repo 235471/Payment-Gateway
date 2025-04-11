@@ -7,6 +7,7 @@ A payment gateway API developed in Go as part of the Full Cycle Imersão course.
 *   Go 1.22+
 *   Docker & Docker Compose
 *   [golang-migrate](https://github.com/golang-migrate/migrate) CLI tool
+*   Kafka (running via Docker Compose)
 
 ## Environment Variables
 
@@ -23,6 +24,12 @@ DB_SSLMODE=disable # or 'require', 'verify-full', etc. depending on your setup
 
 # Server Configuration
 HTTP_PORT=8080
+
+# Kafka Configuration (used by the Go app)
+KAFKA_BROKERS=localhost:9092 # Comma-separated list of Kafka brokers
+KAFKA_PENDING_TRANSACTIONS_TOPIC=pending_transactions
+KAFKA_TRANSACTIONS_RESULT_TOPIC=transaction_results
+KAFKA_CONSUMER_GROUP_ID=payment-gateway-group # Consumer group ID
 ```
 
 ## Setup and Running
@@ -36,8 +43,8 @@ HTTP_PORT=8080
 2.  **Create `.env` file:**
     Copy the environment variables listed above into a `.env` file in the project root and fill in your database credentials.
 
-3.  **Start the database:**
-    This command starts the PostgreSQL database service defined in `docker-compose.yml`.
+3.  **Start services:**
+    This command starts the PostgreSQL database and Kafka services defined in `docker-compose.yml`.
     ```bash
     docker-compose up -d
     ```
@@ -117,11 +124,12 @@ Endpoints related to invoices (`/invoices`) require authentication via an API ke
 *   `cmd/app/main.go`: Main application entry point.
 *   `internal/`: Contains the core application logic.
     *   `domain/`: Core business entities and repository interfaces.
+    *   `domain/events`: Defines domain events (e.g., for Kafka).
     *   `repository/`: Database interaction logic (implementations of domain repositories).
-    *   `service/`: Business logic orchestration.
+    *   `service/`: Business logic orchestration (including Kafka interaction).
     *   `web/`: HTTP server, handlers, routes, and middleware.
 *   `migrations/`: Database migration files (`.up.sql` and `.down.sql`).
-*   `docker-compose.yml`: Defines the PostgreSQL service.
+*   `docker-compose.yml`: Defines the PostgreSQL and Kafka services.
 *   `.golangci.yml`: Linter configuration.
 *   `go.mod`, `go.sum`: Go module files.
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -33,10 +34,33 @@ func main() {
 		log.Fatal("Error connecting to database: ", err)
 	}
 
+	defer dbConn.Close()
+
+	// Innitialize Kafka
+	baseKafkaConfig := service.NewKafkaConfig()
+	// Config Kafka producer
+	producerTopic := os.Getenv("KAFKA_PENDING_TRANSACTIONS_TOPIC")
+	producerConfig := baseKafkaConfig.WithTopic(producerTopic)
+	kafkaProducer := service.NewKafkaProducer(producerConfig)
+	defer kafkaProducer.Close()
+
 	accountRepository := repository.NewAccountRepository(dbConn)
 	accountService := service.NewAccountService(accountRepository)
 	invoiceRepository := repository.NewInvoiceRepository(dbConn)
-	invoiceService := service.NewInvoiceService(invoiceRepository, *accountService)
+	invoiceService := service.NewInvoiceService(invoiceRepository, *accountService, kafkaProducer)
+
+	// Config Kafka consumer
+	consumerTopic := os.Getenv("KAFKA_TRANSACTIONS_RESULT_TOPIC")
+	consumerConfig := baseKafkaConfig.WithTopic(consumerTopic)
+	groupID := os.Getenv("KAFKA_CONSUMER_GROUP_ID")
+	kafkaConsumer := service.NewKafkaConsumer(consumerConfig, groupID, invoiceService)
+	defer kafkaConsumer.Close()
+	// Start Kafka consumer go routine
+	go func() {
+		if err := kafkaConsumer.Consume(context.Background()); err != nil {
+			log.Printf("Error consuming kafka messages: %v", err)
+		}
+	}()
 
 	server := server.NewServer(accountService, invoiceService, os.Getenv("HTTP_PORT"))
 	err = server.Start()

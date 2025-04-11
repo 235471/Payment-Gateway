@@ -1,0 +1,29 @@
+services:
+  nestjs:
+    container_name: nestjs
+    build: .
+    ports:
+      - 3333:3000
+    volumes:
+      - .:/home/node/app # Mount local code
+      - /home/node/app/node_modules
+
+  db:
+    container_name: anti-fraud
+    image: bitnami/postgresql:latest
+    environment:
+      POSTGRESQL_USERNAME: pgsql
+      POSTGRESQL_PASSWORD: pgsql
+      POSTGRESQL_DATABASE: anti-fraud
+    ports:
+      - 5433:5432
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pgsql", "-d", "anti-fraud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5        
+
+volumes:
+  postgres_data:

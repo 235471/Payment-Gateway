@@ -35,4 +35,4 @@ EXPOSE 3333
 # Command to run the application (adjust if your start script is different)
 # Use start:dev for development with hot-reloading (requires devDependencies)
 # Use start:prod or node dist/main for production builds
-CMD [ "sh", "-c", "npx prisma migrate deploy && npm run start:dev" ]
+CMD [ "sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run start:dev" ]

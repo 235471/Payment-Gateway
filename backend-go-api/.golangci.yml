@@ -1,0 +1,68 @@
+version: "2"
+
+run:
+  # timeout for analysis, e.g. 5m, default is 1m
+  timeout: 5m
+  # skip directories:
+  skip-dirs:
+    - vendor/
+  # skip files matching regex:
+  skip-files:
+    - ".*_test\\.go"
+
+linters-settings:
+  govet:
+    # Enable all analyzers
+    enable-all: true
+  gocyclo:
+    # Minimum complexity to report, lower is stricter
+    min-complexity: 15
+  goconst:
+    # Minimum length of string constant
+    min-len: 2
+    # Minimum occurrences of constant string
+    min-occurrences: 2
+  misspell:
+    # Correct commonly misspelled English words in source files
+    locale: US
+  unused:
+    # Check for unused constants, variables, functions and types
+    check-exported: false
+  lll:
+    # Max line length, lines longer will be reported.
+    line-length: 80
+
+linters:
+  # Disable all linters by default and enable specific ones
+  disable-all: true
+  enable:
+    - govet          # Reports suspicious constructs
+    - errcheck       # Checks for unchecked errors
+    - staticcheck    # Huge collection of static analysis checks
+    - unused         # Checks for unused code
+    - ineffassign    # Detects when assignments to existing variables are not used
+    - gocyclo        # Computes cyclomatic complexity
+    - misspell       # Finds commonly misspelled English words
+    - goconst        # Finds repeated strings that could be constants
+    - lll            # Reports long lines
+
+# formatters configuration
+formatters:
+  enable:
+    - gofmt          # Formats code with gofmt
+    - goimports      # Checks imports and formats code
+
+issues:
+  # Maximum issues count per linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
+  # Exclude rules
+  exclude-rules:
+    # Example: exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec

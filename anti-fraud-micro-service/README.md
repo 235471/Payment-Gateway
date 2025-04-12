@@ -10,10 +10,21 @@ This project is a NestJS-based microservice designed to process incoming invoice
 - Calculates a dynamic suspicion score based on recent rejected transactions.
 - Implements multiple fraud detection specifications:
     - **Suspicious Account:** Checks if the account's dynamic suspicion score exceeds a configured threshold.
-    - **Unusual Amount:** Compares the invoice amount against the account's historical transaction average and standard deviation.
+    - **Unusual Amount:** Compares the invoice amount against the account's historical transaction patterns using Median Absolute Deviation (MAD) for robust outlier detection. It considers recent history (configurable time window) with a fallback to a fixed number of past invoices if recent data is insufficient.
     - **Frequent High Value:** Detects if an account has made an excessive number of transactions within a defined timeframe.
 - Stores invoice details and fraud history (if detected) in a PostgreSQL database.
 - Provides API endpoints to retrieve invoice information (`GET /invoices`, `GET /invoices/:id`).
+- Integrates with Kafka for asynchronous processing (see Kafka Integration section).
+
+## Kafka Integration
+
+This microservice integrates with Apache Kafka to decouple the fraud detection process:
+
+-   **Consumes:** Listens to the `pending_transactions` topic for new invoices submitted for fraud analysis.
+-   **Produces:** After processing, it publishes the result (approved or rejected with reason) to the `transactions_result` topic.
+-   **Workflow:** The Go backend service is expected to consume messages from the `transactions_result` topic to update the final status of the invoice.
+
+*(Note: Kafka broker details are typically configured via environment variables specific to the Kafka client setup, which are not detailed in this README but would be necessary for deployment.)*
 
 ## Technology Stack
 
@@ -74,10 +85,19 @@ DATABASE_URL="postgresql://<username>:<password>@localhost:5433/<db-name>"
 # (Used by SuspiciousAccountSpecification)
 SUSPICIOUS_SCORE_THRESHOLD=10 # Example value
 
-# Number of past invoices to consider for calculating historical average/deviation
-# (Used by UnusualAmountSpecification)
-INVOICES_HISTORY_COUNT=10 # Example value
+# --- Unusual Amount Specification Parameters ---
+# Number of days to look back for recent invoice history
+FRAUD_HISTORY_WINDOW_DAYS=60 # Example value
+# Minimum number of invoices required within the history window for MAD calculation
+FRAUD_MIN_INVOICES_WINDOW=10 # Example value
+# Absolute minimum number of invoices needed (either from window or fallback) for any calculation
+FRAUD_MIN_INVOICES_FALLBACK=3 # Example value
+# Multiplier for MAD to determine the unusual amount threshold (Threshold = Median + Multiplier * 1.4826 * MAD)
+FRAUD_MAD_MULTIPLIER=3 # Example value
+# Fallback: Number of past invoices to fetch if the time window yields insufficient data (< FRAUD_MIN_INVOICES_WINDOW)
+INVOICES_HISTORY_COUNT=5 # Example value (Note: Original example value was 10, ensure consistency or update example)
 
+# --- Frequent High Value Specification Parameters ---
 # Number of invoices within the timeframe to trigger frequent high-value fraud
 # (Used by FrequentHighValueSpecification)
 SUSPICIOUS_INVOICES_COUNT=5 # Example value

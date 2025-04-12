@@ -35,5 +35,4 @@ EXPOSE 3333
 # Command to run the application (adjust if your start script is different)
 # Use start:dev for development with hot-reloading (requires devDependencies)
 # Use start:prod or node dist/main for production builds
-# Keep container running without starting app automatically for docker exec access
-CMD [ "tail", "-f", "/dev/null" ]
+CMD [ "sh", "-c", "npx prisma migrate deploy && npm run start:dev" ]

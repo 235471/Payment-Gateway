@@ -1,6 +1,10 @@
 package events
 
-import "github.com/devfullcycle/imersao22/go-gateway/internal/domain"
+import (
+	"strings"
+
+	"github.com/devfullcycle/imersao22/go-gateway/internal/domain"
+)
 
 type TransactionResult struct {
 	InvoiceID string `json:"invoice_id"`
@@ -15,5 +19,5 @@ func NewTransactionResult(invoiceID string, status string) *TransactionResult {
 }
 
 func (t *TransactionResult) ToDomainStatus() domain.Status {
-	return domain.Status(t.Status)
+	return domain.Status(strings.ToLower(t.Status))
 }

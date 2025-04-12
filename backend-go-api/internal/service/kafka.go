@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time" // Add time import
 
 	"github.com/devfullcycle/imersao22/go-gateway/internal/domain/events"
 	"github.com/segmentio/kafka-go"
@@ -27,22 +28,23 @@ type KafkaConfig struct {
 }
 
 // WithTopic cria uma nova configuração com um tópico diferente
-func (c *KafkaConfig) WithTopic(topic string) *KafkaConfig {
+func (c *KafkaConfig) WithTopic(topic string) *KafkaConfig { // Add {
 	return &KafkaConfig{
 		Brokers: c.Brokers,
 		Topic:   topic,
 	}
-}
+} // Add }
 
 func NewKafkaConfig() *KafkaConfig {
-	broker := os.Getenv("KAFKA_BROKER")
+	broker := os.Getenv("KAFKA_BROKERS") // Changed from KAFKA_BROKER to KAFKA_BROKERS
 	if broker == "" {
-		broker = "localhost:9092"
+		broker = "localhost:9092" // Keep fallback just in case, though it shouldn't be needed with Docker Compose
 	}
 
-	topic := os.Getenv("KAFKA_PRODUCER_TOPIC")
+	// Use the specific env var defined in docker-compose for the pending transactions topic
+	topic := os.Getenv("KAFKA_PENDING_TRANSACTIONS_TOPIC")
 	if topic == "" {
-		topic = "pending_transactions"
+		topic = "pending_transactions" // Keep fallback just in case
 	}
 
 	return &KafkaConfig{
@@ -134,8 +136,11 @@ func (c *KafkaConsumer) Consume(ctx context.Context) error {
 	for {
 		msg, err := c.reader.ReadMessage(ctx)
 		if err != nil {
-			slog.Error("erro ao ler mensagem do kafka", "error", err)
-			return err
+			// Log error, but continue loop to retry connection/reading
+			slog.Error("erro ao ler mensagem do kafka, retrying...", "error", err)
+			// Optional: Add a small delay before retrying
+			time.Sleep(5 * time.Second)
+			continue // Continue to the next iteration to retry reading
 		}
 
 		var result events.TransactionResult

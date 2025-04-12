@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"log" // Added for logging
 	"time"
 
 	"github.com/devfullcycle/imersao22/go-gateway/internal/domain"
@@ -21,6 +22,7 @@ func (r *AccountRepository) CreateAccount(account *domain.Account) error {
 	`)
 
 	if err != nil {
+		log.Printf("ERROR preparing insert statement: %v", err) // Added log
 		return err
 	}
 
@@ -37,6 +39,7 @@ func (r *AccountRepository) CreateAccount(account *domain.Account) error {
 	)
 
 	if err != nil {
+		log.Printf("ERROR executing insert statement: %v", err) // Added log
 		return err
 	}
 

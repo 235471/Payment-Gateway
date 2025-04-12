@@ -57,6 +57,7 @@ func NewInvoice(accountID string, amount float64, description string, paymentTyp
 
 func (i *Invoice) Process() error {
 	if i.Amount >= 10000 {
+		i.Status = StatusPending
 		return nil
 	}
 

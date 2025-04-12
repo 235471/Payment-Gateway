@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log" // Added for logging
+
 	"github.com/devfullcycle/imersao22/go-gateway/internal/domain"
 	"github.com/devfullcycle/imersao22/go-gateway/internal/dto"
 )
@@ -19,6 +21,7 @@ func (s *AccountService) CreateAccount(input *dto.CreateAccountInput) (*dto.Acco
 	existingAccount, err := s.repository.FindByAPIKey(account.APIKey)
 
 	if err != nil && err != domain.ErrAccountNotFound {
+		log.Printf("ERROR checking for existing API key %s: %v", account.APIKey, err) // Added log
 		return nil, err
 	}
 

@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS accounts (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_accounts_api_key ON accounts(api_key);
-CREATE INDEX idx_accounts_email ON accounts(email);
+CREATE INDEX IF NOT EXISTS idx_accounts_api_key ON accounts(api_key);
+CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email);
 
 CREATE TABLE IF NOT EXISTS invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -23,6 +23,6 @@ CREATE TABLE IF NOT EXISTS invoices (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_invoices_account_id ON invoices(account_id);
-CREATE INDEX idx_invoices_status ON invoices(status);
-CREATE INDEX idx_invoices_created_at ON invoices(created_at);
+CREATE INDEX IF NOT EXISTS idx_invoices_account_id ON invoices(account_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices(created_at);
